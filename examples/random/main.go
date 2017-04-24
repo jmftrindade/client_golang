@@ -57,12 +57,26 @@ var (
 		Help:    "RPC latency distributions.",
 		Buckets: prometheus.LinearBuckets(*normMean-5**normDomain, .5**normDomain, 20),
 	})
+
+	// Data lineage events sizes in data bytes.
+	lineageOpSizesHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "lineage_op_sizes_histogram_seconds",
+			Help:    "Data lineage op duration distributions.",
+			Buckets: prometheus.LinearBuckets(*normMean-5**normDomain, .5**normDomain, 20),
+		},
+		[]string{"user", "op", "dataset"},
+	)
 )
 
 func init() {
 	// Register the summary and the histogram with Prometheus's default registry.
-	prometheus.MustRegister(rpcDurations)
-	prometheus.MustRegister(rpcDurationsHistogram)
+	//	prometheus.MustRegister(rpcDurations)
+	//	prometheus.MustRegister(rpcDurationsHistogram)
+
+	// Register the data lineage metrics with Prometheus's default registry.
+	//	prometheus.MustRegister(lineageOpDurations)
+	prometheus.MustRegister(lineageOpSizesHistogram)
 }
 
 func main() {
@@ -97,6 +111,21 @@ func main() {
 			v := rand.ExpFloat64() / 1e6
 			rpcDurations.WithLabelValues("exponential").Observe(v)
 			time.Sleep(time.Duration(50*oscillationFactor()) * time.Millisecond)
+		}
+	}()
+
+	// Periodically record randomly generated sample data lineage events.
+	go func() {
+		for {
+			users := []string{"alice", "bob"}
+			datasets := []string{"file_a", "file_b", "file_c"}
+			opTypes := []string{"read", "write"}
+
+			v := (rand.NormFloat64() * *normDomain) + *normMean
+			lineageOpSizesHistogram.WithLabelValues(users[rand.Intn(len(users))],
+				opTypes[rand.Intn(len(opTypes))],
+				datasets[rand.Intn(len(datasets))]).Observe(v)
+			time.Sleep(time.Duration(75*oscillationFactor()) * time.Millisecond)
 		}
 	}()
 
