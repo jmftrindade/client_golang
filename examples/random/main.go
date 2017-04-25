@@ -37,6 +37,7 @@ var (
 )
 
 var (
+/*
 	// Create a summary to track fictional interservice RPC latencies for three
 	// distinct services with different latency distributions. These services are
 	// differentiated via a "service" label.
@@ -57,16 +58,27 @@ var (
 		Help:    "RPC latency distributions.",
 		Buckets: prometheus.LinearBuckets(*normMean-5**normDomain, .5**normDomain, 20),
 	})
-
+*/
 	// Data lineage events sizes in data bytes.
 	lineageOpSizesHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "lineage_op_sizes_histogram_seconds",
-			Help:    "Data lineage op duration distributions.",
+			Name:    "lineage_op_sizes_histogram_bytes",
+			Help:    "Data lineage op sizes distributions (in bytes).",
 			Buckets: prometheus.LinearBuckets(*normMean-5**normDomain, .5**normDomain, 20),
 		},
 		[]string{"user", "op", "dataset"},
 	)
+
+	// Data lineage event durations in seconds.
+	lineageOpDurationsHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "lineage_op_durations_histogram_seconds",
+			Help:    "Data lineage op duration distributions (in seconds).",
+			Buckets: prometheus.LinearBuckets(*normMean-5**normDomain, .5**normDomain, 20),
+		},
+		[]string{"user", "op", "dataset"},
+	)
+
 )
 
 func init() {
@@ -75,8 +87,8 @@ func init() {
 	//	prometheus.MustRegister(rpcDurationsHistogram)
 
 	// Register the data lineage metrics with Prometheus's default registry.
-	//	prometheus.MustRegister(lineageOpDurations)
 	prometheus.MustRegister(lineageOpSizesHistogram)
+        prometheus.MustRegister(lineageOpDurationsHistogram)
 }
 
 func main() {
@@ -87,7 +99,7 @@ func main() {
 	oscillationFactor := func() float64 {
 		return 2 + math.Sin(math.Sin(2*math.Pi*float64(time.Since(start))/float64(*oscillationPeriod)))
 	}
-
+/*
 	// Periodically record some sample latencies for the three services.
 	go func() {
 		for {
@@ -113,7 +125,7 @@ func main() {
 			time.Sleep(time.Duration(50*oscillationFactor()) * time.Millisecond)
 		}
 	}()
-
+*/
 	// Periodically record randomly generated sample data lineage events.
 	go func() {
 		for {
@@ -125,6 +137,14 @@ func main() {
 			lineageOpSizesHistogram.WithLabelValues(users[rand.Intn(len(users))],
 				opTypes[rand.Intn(len(opTypes))],
 				datasets[rand.Intn(len(datasets))]).Observe(v)
+
+                        // Use a different random value, but still generate both of these in side-step.
+			v = (rand.NormFloat64() * *normDomain) + *normMean
+			lineageOpDurationsHistogram.WithLabelValues(users[rand.Intn(len(users))],
+				opTypes[rand.Intn(len(opTypes))],
+				datasets[rand.Intn(len(datasets))]).Observe(v)
+
+                        // Sleep a little to add variance.
 			time.Sleep(time.Duration(75*oscillationFactor()) * time.Millisecond)
 		}
 	}()
