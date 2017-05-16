@@ -51,12 +51,22 @@ scrape_configs:
 ```
 
 To start a few data lineage producing clients:
-
 ```
 $ cd examples/random
 $ ./random_lineage_generator -listen-address=:8082 &
 $ ./random_lineage_generator -listen-address=:8080 &
 $ ./random_lineage_generator -listen-address=:8082 &
+```
+
+To view data lineage timeseries data, go to Prometheus dashboard at http://localhost:9090/ and look for "lineage" on the search bar.
+
+To delete existing timeseries recorded by the data lineage clients:
+```
+$ curl -XDELETE -g 'http://localhost:9090/api/v1/series?match[]=lineage_op_durations'
+$ curl -XDELETE -g 'http://localhost:9090/api/v1/series?match[]=lineage_op_durations_sum'
+$ curl -XDELETE -g 'http://localhost:9090/api/v1/series?match[]=lineage_op_durations_count'
+
+etc...
 ```
 
 # Prometheus Go client library
