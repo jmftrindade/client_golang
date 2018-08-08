@@ -93,6 +93,19 @@ The
 [`examples` directory](https://github.com/prometheus/client_golang/tree/master/examples)
 contains simple examples of instrumented code.
 
+Example queries:
+```
+metrics:
+- lineage_op_sizes_histogram_bytes_bucket
+- lineage_op_durations_histogram_seconds_bucket
+
+the 95th %ile over 5m windows:
+histogram_quantile(0.95, sum(rate(lineage_op_sizes_histogram_bytes_bucket[5m])) by (le))
+
+rate(lineage_op_durations_histogram_seconds_sum[5m]) / rate(lineage_op_durations_histogram_seconds_count[5m]) 
+```
+
+
 ## Client for the Prometheus HTTP API
 
 [![code-coverage](http://gocover.io/_badge/github.com/prometheus/client_golang/api/prometheus)](http://gocover.io/github.com/prometheus/client_golang/api/prometheus) [![go-doc](https://godoc.org/github.com/prometheus/client_golang/api/prometheus?status.svg)](https://godoc.org/github.com/prometheus/client_golang/api/prometheus)
